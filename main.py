@@ -17,6 +17,59 @@ global delays
 delays = [500, 800, 400, 400, 1000]
 
 
+def functionality(y: Lock):
+
+    # lock is acquired before the thread calling this function is started. If the state of lock (y) changes
+    # while running, then the loop ends and end of functionality(), thread dies naturally.
+    while y.locked():
+
+        # 0x44 = D
+        temp1 = win32api.PostMessage(hwndChild, win32con.WM_CHAR, 0x44, 0)
+        sleep(delays[0]/1000)
+
+        # 0x60 = numeric 0
+        temp2 = win32api.PostMessage(hwndChild, win32con.WM_CHAR, 0x30, 0)
+        sleep(delays[1]/1000)
+
+        # 0x60 = numeric 0
+        temp3 = win32api.PostMessage(hwndChild, win32con.WM_CHAR, 0x30, 0)
+        sleep(delays[2]/1000)
+
+        # 0x64 = numeric 4
+        temp4 = win32api.PostMessage(hwndChild, win32con.WM_CHAR, 0x34, 0)
+        sleep(delays[3]/1000)
+
+        # 0x60 = numeric 0
+        temp5 = win32api.PostMessage(hwndChild, win32con.WM_CHAR, 0x30, 0)
+        sleep(delays[4]/1000)
+
+
+# Implements mutex + threading to toggle the inputs on a single button, updates button text
+def toggle(button: QPushButton, y: Lock):
+
+    # Setup a new thread, but only run it if the lock is currently in unlocked state
+    x = Thread(group=None, target=lambda: functionality(y))
+
+    # if in locked state, a Thread is already running and entering keys. Unlock and let the thread die.
+    if y.locked():
+        button.setText("Start")
+        y.release()
+
+    # if in an unlocked state, acquire the lock and run the Thread.
+    else:
+        button.setText("Stop")
+        y.acquire()
+        x.start()
+
+
+# update the delays list with user entered data
+def update_handler(e1, e2, e3, e4, e5):
+    args_list = [e1, e2, e3, e4, e5]
+    global delays
+    for i in range(5):
+        delays[i] = int(args_list[i].text())
+
+
 def main():
 
     # mutex lock - singleton
